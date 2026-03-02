@@ -230,11 +230,25 @@
       font-weight: 700;
       color: #a78bfa;
       letter-spacing: 0.05em;
-      transition: color 0.15s;
+      border: 2px solid #2a2a4a;
+      border-radius: 12px;
+      padding: 16px 48px;
+      background: #0f0f1a;
+      min-width: 130px;
+      transition: background 0.2s, border-color 0.2s, color 0.15s;
     }
 
-    #note-display.match   { color: #34d399; }
-    #note-display.mismatch { color: #f87171; }
+    #note-display.match {
+      color: #34d399;
+      background: rgba(52, 211, 153, 0.15);
+      border-color: #34d399;
+    }
+
+    #note-display.mismatch {
+      color: #f87171;
+      background: rgba(248, 113, 113, 0.15);
+      border-color: #f87171;
+    }
 
     #heard-note {
       display: none;
@@ -290,6 +304,7 @@
     let detectRaf = null;
     let isListening = false;
     let noteHistory = [];
+    let deafUntil = 0;
 
     noteNames.forEach(note => {
       const label = document.createElement('label');
@@ -309,10 +324,12 @@
 
     function randomNote() {
       const selected = getSelected();
-      targetNote = selected[Math.floor(Math.random() * selected.length)];
+      const choices = selected.length > 1 ? selected.filter(n => n !== targetNote) : selected;
+      targetNote = choices[Math.floor(Math.random() * choices.length)];
       display.textContent = targetNote;
       display.className = '';
       heardNote.style.display = 'none';
+      noteHistory = [];
     }
 
     function syncButtons() {
@@ -366,7 +383,9 @@
         const buf = new Float32Array(analyser.fftSize);
         analyser.getFloatTimeDomainData(buf);
         const freq = autoCorrelate(buf, audioCtx.sampleRate);
-        if (freq > 0) {
+        if (Date.now() < deafUntil) {
+          noteHistory = [];
+        } else if (freq > 0) {
           noteHistory.push(freqToNote(freq));
           if (noteHistory.length > 5) noteHistory.shift();
         } else {
@@ -384,7 +403,7 @@
               heardNote.style.display = 'none';
               if (sequenceOnMatch && !matchCooldown) {
                 matchCooldown = true;
-                setTimeout(() => { randomNote(); matchCooldown = false; }, 600);
+                setTimeout(() => { deafUntil = Date.now() + 700; randomNote(); matchCooldown = false; }, 600);
               }
             } else {
               display.className = 'mismatch';
