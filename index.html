@@ -216,13 +216,37 @@
       box-shadow: 0 6px 28px rgba(220, 38, 38, 0.5);
     }
 
+    .note-display-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 28px;
+      min-height: 3.5rem;
+    }
+
     #note-display {
       font-size: 3rem;
       font-weight: 700;
       color: #a78bfa;
-      margin-top: 28px;
-      min-height: 3.5rem;
       letter-spacing: 0.05em;
+      transition: color 0.15s;
+    }
+
+    #note-display.match   { color: #34d399; }
+    #note-display.mismatch { color: #f87171; }
+
+    #heard-note {
+      display: none;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #94a3b8;
+      letter-spacing: 0.03em;
+    }
+
+    #heard-note span {
+      color: #f87171;
+      font-size: 1.4rem;
     }
   </style>
 </head>
@@ -240,7 +264,10 @@
       <label for="interval-input">seconds</label>
       <button id="sequence-btn">Start Random Sequence</button>
     </div>
-    <div id="note-display"></div>
+    <div class="note-display-area">
+      <div id="note-display"></div>
+      <div id="heard-note">You: <span></span></div>
+    </div>
   </div>
 
   <script>
@@ -251,7 +278,9 @@
     const sequenceBtn = document.getElementById('sequence-btn');
     const intervalInput = document.getElementById('interval-input');
     const display = document.getElementById('note-display');
+    const heardNote = document.getElementById('heard-note');
 
+    let targetNote = null;
     let sequenceTimer = null;
     let audioCtx = null;
     let analyser = null;
@@ -277,7 +306,10 @@
 
     function randomNote() {
       const selected = getSelected();
-      display.textContent = selected[Math.floor(Math.random() * selected.length)];
+      targetNote = selected[Math.floor(Math.random() * selected.length)];
+      display.textContent = targetNote;
+      display.className = '';
+      heardNote.style.display = 'none';
     }
 
     function syncButtons() {
@@ -317,6 +349,8 @@
       isListening = false;
       listenBtn.textContent = 'Listen';
       listenBtn.classList.remove('listening');
+      display.className = '';
+      heardNote.style.display = 'none';
     }
 
     let lastDetect = 0;
@@ -327,7 +361,20 @@
         const buf = new Float32Array(analyser.fftSize);
         analyser.getFloatTimeDomainData(buf);
         const freq = autoCorrelate(buf, audioCtx.sampleRate);
-        if (freq > 0) display.textContent = freqToNote(freq);
+        if (freq > 0 && targetNote) {
+          const heard = freqToNote(freq);
+          if (heard === targetNote) {
+            display.className = 'match';
+            heardNote.style.display = 'none';
+          } else {
+            display.className = 'mismatch';
+            heardNote.querySelector('span').textContent = heard;
+            heardNote.style.display = 'block';
+          }
+        } else if (freq <= 0) {
+          display.className = '';
+          heardNote.style.display = 'none';
+        }
       }
       detectRaf = requestAnimationFrame(detectLoop);
     }
