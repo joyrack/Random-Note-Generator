@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Random Note Generator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f0f1a;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      overflow: hidden;
+    }
+
+    .card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 16px;
+      padding: 48px 56px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      position: relative;
+    }
+
+    h1 {
+      color: #e0e0ff;
+      font-size: 1.8rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      margin-bottom: 32px;
+    }
+
+    #generate-btn {
+      background: linear-gradient(135deg, #6c63ff, #a855f7);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 36px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+      box-shadow: 0 4px 20px rgba(108, 99, 255, 0.4);
+      position: relative;
+    }
+
+    #generate-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(108, 99, 255, 0.55);
+    }
+
+    #generate-btn:active {
+      transform: translateY(0);
+    }
+
+    #note-display {
+      font-size: 3rem;
+      font-weight: 700;
+      color: #a78bfa;
+      margin-top: 28px;
+      min-height: 3.5rem;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Random Note Generator</h1>
+    <button id="generate-btn">Generate Notes</button>
+    <div id="note-display"></div>
+  </div>
+
+  <script>
+    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+    const btn = document.getElementById('generate-btn');
+    const display = document.getElementById('note-display');
+
+    btn.addEventListener('click', () => {
+      display.textContent = noteNames[Math.floor(Math.random() * noteNames.length)];
+    });
+  </script>
+</body>
+</html>
