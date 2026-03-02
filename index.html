@@ -282,6 +282,8 @@
 
     let targetNote = null;
     let sequenceTimer = null;
+    let sequenceOnMatch = false;
+    let matchCooldown = false;
     let audioCtx = null;
     let analyser = null;
     let micStream = null;
@@ -351,6 +353,7 @@
       listenBtn.classList.remove('listening');
       display.className = '';
       heardNote.style.display = 'none';
+      if (sequenceOnMatch) stopSequence();
     }
 
     let lastDetect = 0;
@@ -366,6 +369,10 @@
           if (heard === targetNote) {
             display.className = 'match';
             heardNote.style.display = 'none';
+            if (sequenceOnMatch && !matchCooldown) {
+              matchCooldown = true;
+              setTimeout(() => { randomNote(); matchCooldown = false; }, 600);
+            }
           } else {
             display.className = 'mismatch';
             heardNote.querySelector('span').textContent = heard;
@@ -427,12 +434,24 @@
     // ── Generate / Sequence ───────────────────────────────────
     btn.addEventListener('click', randomNote);
 
+    function stopSequence() {
+      clearInterval(sequenceTimer);
+      sequenceTimer = null;
+      sequenceOnMatch = false;
+      matchCooldown = false;
+      sequenceBtn.textContent = 'Start Random Sequence';
+      sequenceBtn.classList.remove('running');
+    }
+
     sequenceBtn.addEventListener('click', () => {
-      if (sequenceTimer) {
-        clearInterval(sequenceTimer);
-        sequenceTimer = null;
-        sequenceBtn.textContent = 'Start Random Sequence';
-        sequenceBtn.classList.remove('running');
+      if (sequenceTimer || sequenceOnMatch) {
+        stopSequence();
+      } else if (isListening) {
+        intervalInput.value = 0;
+        sequenceOnMatch = true;
+        randomNote();
+        sequenceBtn.textContent = 'Stop Sequence';
+        sequenceBtn.classList.add('running');
       } else {
         const seconds = Math.max(1, parseFloat(intervalInput.value) || 1);
         randomNote();
