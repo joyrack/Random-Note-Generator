@@ -18,7 +18,6 @@
       justify-content: center;
       background: #0f0f1a;
       font-family: 'Segoe UI', system-ui, sans-serif;
-      overflow: hidden;
     }
 
     .card {
@@ -28,7 +27,6 @@
       padding: 48px 56px;
       text-align: center;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-      position: relative;
     }
 
     h1 {
@@ -36,7 +34,43 @@
       font-size: 1.8rem;
       font-weight: 600;
       letter-spacing: 0.02em;
-      margin-bottom: 32px;
+      margin-bottom: 28px;
+    }
+
+    .note-checkboxes {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .note-checkboxes label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: #c4c4e0;
+      font-size: 0.95rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .note-checkboxes input[type="checkbox"] {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #4a4a7a;
+      border-radius: 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .note-checkboxes input[type="checkbox"]:checked {
+      background: #6c63ff;
+      border-color: #6c63ff;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4l3 3 5-6' stroke='white' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: center;
     }
 
     #generate-btn {
@@ -51,7 +85,6 @@
       letter-spacing: 0.03em;
       transition: transform 0.1s ease, box-shadow 0.1s ease;
       box-shadow: 0 4px 20px rgba(108, 99, 255, 0.4);
-      position: relative;
     }
 
     #generate-btn:hover {
@@ -61,6 +94,13 @@
 
     #generate-btn:active {
       transform: translateY(0);
+    }
+
+    #generate-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
 
     #note-display {
@@ -76,18 +116,41 @@
 <body>
   <div class="card">
     <h1>Random Note Generator</h1>
-    <button id="generate-btn">Generate Notes</button>
+    <div class="note-checkboxes" id="checkboxes"></div>
+    <button id="generate-btn">Generate Note</button>
     <div id="note-display"></div>
   </div>
 
   <script>
     const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
+    const container = document.getElementById('checkboxes');
     const btn = document.getElementById('generate-btn');
     const display = document.getElementById('note-display');
 
+    noteNames.forEach(note => {
+      const label = document.createElement('label');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = note;
+      cb.checked = true;
+      cb.addEventListener('change', syncButton);
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(note));
+      container.appendChild(label);
+    });
+
+    function getSelected() {
+      return [...container.querySelectorAll('input:checked')].map(cb => cb.value);
+    }
+
+    function syncButton() {
+      btn.disabled = getSelected().length === 0;
+    }
+
     btn.addEventListener('click', () => {
-      display.textContent = noteNames[Math.floor(Math.random() * noteNames.length)];
+      const selected = getSelected();
+      display.textContent = selected[Math.floor(Math.random() * selected.length)];
     });
   </script>
 </body>
