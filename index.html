@@ -289,6 +289,7 @@
     let micStream = null;
     let detectRaf = null;
     let isListening = false;
+    let noteHistory = [];
 
     noteNames.forEach(note => {
       const label = document.createElement('label');
@@ -348,6 +349,7 @@
       micStream.getTracks().forEach(t => t.stop());
       audioCtx.close();
       audioCtx = analyser = micStream = null;
+      noteHistory = [];
       isListening = false;
       listenBtn.textContent = 'Listen';
       listenBtn.classList.remove('listening');
@@ -364,23 +366,32 @@
         const buf = new Float32Array(analyser.fftSize);
         analyser.getFloatTimeDomainData(buf);
         const freq = autoCorrelate(buf, audioCtx.sampleRate);
-        if (freq > 0 && targetNote) {
-          const heard = freqToNote(freq);
-          if (heard === targetNote) {
-            display.className = 'match';
-            heardNote.style.display = 'none';
-            if (sequenceOnMatch && !matchCooldown) {
-              matchCooldown = true;
-              setTimeout(() => { randomNote(); matchCooldown = false; }, 600);
-            }
-          } else {
-            display.className = 'mismatch';
-            heardNote.querySelector('span').textContent = heard;
-            heardNote.style.display = 'block';
-          }
-        } else if (freq <= 0) {
+        if (freq > 0) {
+          noteHistory.push(freqToNote(freq));
+          if (noteHistory.length > 5) noteHistory.shift();
+        } else {
+          noteHistory = [];
           display.className = '';
           heardNote.style.display = 'none';
+        }
+        if (targetNote && noteHistory.length >= 3) {
+          const counts = {};
+          for (const n of noteHistory) counts[n] = (counts[n] || 0) + 1;
+          const [heard, count] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+          if (count >= 3) {
+            if (heard === targetNote) {
+              display.className = 'match';
+              heardNote.style.display = 'none';
+              if (sequenceOnMatch && !matchCooldown) {
+                matchCooldown = true;
+                setTimeout(() => { randomNote(); matchCooldown = false; }, 600);
+              }
+            } else {
+              display.className = 'mismatch';
+              heardNote.querySelector('span').textContent = heard;
+              heardNote.style.display = 'block';
+            }
+          }
         }
       }
       detectRaf = requestAnimationFrame(detectLoop);
@@ -390,7 +401,7 @@
       let rms = 0;
       for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i];
       rms = Math.sqrt(rms / buf.length);
-      if (rms < 0.015) return -1; // too quiet
+      if (rms < 0.08) return -1; // too quiet
 
       const minLag = Math.floor(sampleRate / 1200);
       const maxLag = Math.min(Math.floor(sampleRate / 60), Math.floor(buf.length / 2));
@@ -415,7 +426,7 @@
         if (corr[lag] > maxVal) { maxVal = corr[lag]; bestLag = lag; }
       }
 
-      if (bestLag < 1 || maxVal < 0.5) return -1;
+      if (bestLag < 1 || maxVal < 0.72) return -1;
 
       // Parabolic interpolation for sub-sample accuracy
       const x1 = corr[bestLag - 1] ?? 0, x2 = corr[bestLag], x3 = corr[bestLag + 1] ?? 0;
