@@ -347,7 +347,10 @@
 
     async function startListening() {
       try {
-        micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        micStream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true },
+          video: false
+        });
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioCtx.createAnalyser();
         analyser.fftSize = 2048;
@@ -355,6 +358,12 @@
         isListening = true;
         listenBtn.textContent = 'Stop Listening';
         listenBtn.classList.add('listening');
+        if (sequenceTimer) {
+          clearInterval(sequenceTimer);
+          sequenceTimer = null;
+          sequenceOnMatch = true;
+          intervalInput.value = 0;
+        }
         detectLoop(0);
       } catch (_) {
         display.textContent = 'Mic denied';
@@ -420,7 +429,7 @@
       let rms = 0;
       for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i];
       rms = Math.sqrt(rms / buf.length);
-      if (rms < 0.08) return -1; // too quiet
+      if (rms < 0.03) return -1; // too quiet
 
       const minLag = Math.floor(sampleRate / 1200);
       const maxLag = Math.min(Math.floor(sampleRate / 60), Math.floor(buf.length / 2));
@@ -445,7 +454,7 @@
         if (corr[lag] > maxVal) { maxVal = corr[lag]; bestLag = lag; }
       }
 
-      if (bestLag < 1 || maxVal < 0.72) return -1;
+      if (bestLag < 1 || maxVal < 0.62) return -1;
 
       // Parabolic interpolation for sub-sample accuracy
       const x1 = corr[bestLag - 1] ?? 0, x2 = corr[bestLag], x3 = corr[bestLag + 1] ?? 0;
