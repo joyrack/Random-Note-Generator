@@ -291,7 +291,7 @@
     <div class="sequence-controls">
       <div class="sequence-interval">
         <label for="interval-input">Every</label>
-        <input type="number" id="interval-input" min="1" value="3">
+        <input type="number" id="interval-input" min="1" step="1" value="3">
         <label for="interval-input">seconds</label>
       </div>
       <button id="sequence-btn">Start Random Sequence</button>
@@ -309,6 +309,14 @@
     const btn = document.getElementById('generate-btn');
     const sequenceBtn = document.getElementById('sequence-btn');
     const intervalInput = document.getElementById('interval-input');
+
+    intervalInput.addEventListener('keydown', e => {
+      if (['-', '+', '.', 'e', 'E'].includes(e.key)) e.preventDefault();
+    });
+    intervalInput.addEventListener('blur', () => {
+      const val = parseInt(intervalInput.value, 10);
+      intervalInput.value = (!val || val < 1) ? 1 : val;
+    });
     const display = document.getElementById('note-display');
     const heardNote = document.getElementById('heard-note');
 
